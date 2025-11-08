@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+
+{% block title %}Achats{% endblock %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<style>
+body {
+    background-color: #f4f6f9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Sidebar */
+.sidebar {
+    min-height: 100vh;
+    background-color: #063E8A;
+    color: #fff;
+    padding-top: 20px;
+}
+.sidebar a {
+    color: #fff;
+    display: block;
+    padding: 14px 22px;
+    text-decoration: none;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+.sidebar a:hover,
+.sidebar a.active {
+    background: linear-gradient(90deg, #0353a4, #0d5ecf);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Layout */
+.content {
+    margin-left: 240px;
+    padding: 30px 40px;
+}
+.card {
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    background-color: #fff;
+    padding: 25px;
+    margin: auto;
+    max-width: 1200px;
+    overflow-x: auto;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #063E8A, #0d5ecf);
+    border: none;
+}
+.btn-primary:hover {
+    background: linear-gradient(90deg, #0d5ecf, #063E8A);
+    transform: translateY(-2px);
+}
+.btn-warning {
+    background: #ffc107;
+    border: none;
+    color: #212529;
+}
+.btn-warning:hover {
+    background: #e0a800;
+    transform: translateY(-2px);
+}
+.btn-danger {
+    background: #dc3545;
+    border: none;
+}
+.btn-danger:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+/* Table */
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    font-size: 14px;
+}
+table thead {
+    background: linear-gradient(90deg, #063E8A, #0d5ecf);
+}
+table thead th {
+    color: #fff;
+    font-weight: 500;
+    font-size: 15px;
+    padding: 14px 18px;
+    text-align: center;
+    border-bottom: 2px solid #052c63;
+}
+table thead th:first-child {
+    border-top-left-radius: 10px;
+}
+table thead th:last-child {
+    border-top-right-radius: 10px;
+}
+table tbody td {
+    font-size: 14px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e9ecef;
+    text-align: center;
+    vertical-align: middle;
+}
+table tbody td:nth-child(7),
+table tbody td:nth-child(8),
+table tbody td:nth-child(9),
+table tbody td:nth-child(10) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+table tbody td:last-child {
+    text-align: center;
+}
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
+.action-buttons .btn {
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 8px;
+}
+.table-hover tbody tr {
+    transition: background 0.2s ease;
+}
+.table-hover tbody tr:hover {
+    background-color: rgba(6, 62, 138, 0.04);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content flex-grow-1">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <h2><i class="fa-solid fa-file-invoice"></i> Factures Achats</h2>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addInvoiceModal">
+                <i class="fa-solid fa-plus"></i> Ajouter Facture
+            </button>
+            <button class="btn btn-success mt-2" id="exportBtn">
+                <i class="fa-solid fa-file-export"></i> Exporter
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="invoicesTable">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
+                        <th>#</th>
+                        <th>Numéro</th>
+                        <th>Client</th>
+                        <th>Compte produit</th>
+                        <th>Devise</th>
+                        <th>Date</th>
+                        <th>Montant H.T</th>
+                        <th>Montant TVA</th>
+                        <th>Droits timbre</th>
+                        <th>Montant T.T.C</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr id="invoiceRow{{ invoice.id }}">
+                        <td><input type="checkbox" class="select-row"></td>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ invoice.numero }}</td>
+                        <td>{{ invoice.client }}</td>
+                        <td>{{ invoice.compteProduit }}</td>
+                        <td>{{ invoice.devise }}</td>
+                        <td>{{ invoice.dateFacturation }}</td>
+                        <td>{{ "{:,.2f}".format(invoice.montantHT) }}</td>
+                        <td>{{ "{:,.2f}".format(invoice.montantTVA) }}</td>
+                        <td>{{ "{:,.2f}".format(invoice.droitsTimbre) }}</td>
+                        <td>{{ "{:,.2f}".format(invoice.montantTTC) }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-sm btn-warning edit-btn"
+                                    data-id="{{ invoice.id }}"
+                                    data-numero="{{ invoice.numero }}"
+                                    data-client="{{ invoice.client }}"
+                                    data-compte="{{ invoice.compteProduit }}"
+                                    data-devise="{{ invoice.devise }}"
+                                    data-date="{{ invoice.dateFacturation }}"
+                                    data-montantht="{{ invoice.montantHT }}"
+                                    data-montanttva="{{ invoice.montantTVA }}"
+                                    data-droitstimbre="{{ invoice.droitsTimbre }}"
+                                    data-montantttc="{{ invoice.montantTTC }}">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="{{ invoice.id }}">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="12" class="text-center">Aucune facture trouvée.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<!-- Add Invoice Modal -->
+<div class="modal fade" id="addInvoiceModal" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog">
+    <div class="modal-content">
+        <form id="addInvoiceForm">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter facture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {% for field in ['client','compteProduit','devise','numero','dateFacturation','montantHT','montantTVA','droitsTimbre','montantTTC'] %}
+                <div class="mb-3">
+                    <label class="form-label">{{ field.replace('_',' ').title() }}</label>
+                    <input type="{{ 'number' if 'montant' in field or 'droitsTimbre' in field else 'text' }}" step="0.01" class="form-control" name="{{ field }}" required>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" class="btn btn-primary">Ajouter</button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+
+<!-- Edit Invoice Modal -->
+<div class="modal fade" id="editInvoiceModal" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog">
+    <div class="modal-content">
+        <form id="editInvoiceForm">
+            <div class="modal-header">
+                <h5 class="modal-title">Modifier facture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="id">
+                {% for field in ['client','compteProduit','devise','numero','dateFacturation','montantHT','montantTVA','droitsTimbre','montantTTC'] %}
+                <div class="mb-3">
+                    <label class="form-label">{{ field.replace('_',' ').title() }}</label>
+                    <input type="{{ 'number' if 'montant' in field or 'droitsTimbre' in field else 'text' }}" step="0.01" class="form-control" name="{{ field }}" required>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" class="btn btn-warning">Modifier</button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Fill Edit Modal & show confirmation popup before edit
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modal = document.getElementById('editInvoiceForm');
+            modal.id.value = btn.dataset.id;
+            modal.numero.value = btn.dataset.numero;
+            modal.client.value = btn.dataset.client;
+            modal.compteProduit.value = btn.dataset.compte;
+            modal.devise.value = btn.dataset.devise;
+            modal.dateFacturation.value = btn.dataset.date;
+            modal.montantHT.value = parseFloat(btn.dataset.montantht).toFixed(2);
+            modal.montantTVA.value = parseFloat(btn.dataset.montanttva).toFixed(2);
+            modal.droitsTimbre.value = parseFloat(btn.dataset.droitstimbre).toFixed(2);
+            modal.montantTTC.value = parseFloat(btn.dataset.montantttc).toFixed(2);
+            Swal.fire({
+                title: 'Modifier cette facture ?',
+                icon: 'question',
+                showCancelButton: true,
+                cancelButtonText: 'Annuler',
+                confirmButtonText: 'Modifier',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    new bootstrap.Modal(document.getElementById('editInvoiceModal')).show();
+                }
+            });
+        });
+    });
+
+    // Delete Invoice
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            Swal.fire({
+                title: 'Supprimer cette facture ?',
+                text: "Cette action est irréversible !",
+                icon: 'warning',
+                showCancelButton: true,
+                cancelButtonText: 'Annuler',
+                confirmButtonText: 'Oui, supprimer',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/achat/delete/${id}`, { method: 'DELETE' })
+                        .then(res => res.json())
+                        .then(() => {
+                            document.getElementById(`invoiceRow${id}`).remove();
+                            Swal.fire('Supprimé !', 'La facture a été supprimée.', 'success');
+                        });
+                }
+            });
+        });
+    });
+
+    // Add Invoice
+    document.getElementById('addInvoiceForm').addEventListener('submit', e => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target).entries());
+        fetch('/achat/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).then(res => res.json()).then(() => location.reload());
+    });
+
+    // Edit Invoice
+    document.getElementById('editInvoiceForm').addEventListener('submit', e => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target).entries());
+        fetch(`/achat/edit/${data.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).then(res => res.json()).then(() => location.reload());
+    });
+
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const selectAll = document.getElementById('selectAll');
+    selectAll.addEventListener('change', () => {
+        document.querySelectorAll('.select-row').forEach(cb => cb.checked = selectAll.checked);
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', async () => {
+        const selectedRows = [...document.querySelectorAll('.select-row')]
+            .filter(cb => cb.checked)
+            .map(cb => cb.closest('tr'));
+
+        if (selectedRows.length === 0) {
+            Swal.fire('Aucune sélection', 'Veuillez sélectionner au moins une facture.', 'warning');
+            return;
+        }
+
+        // Build Excel data
+        const data = selectedRows.map(tr => {
+            const tds = tr.querySelectorAll('td');
+            return {
+                Numero: tds[2].textContent,
+                Client: tds[3].textContent,
+                CompteProduit: tds[4].textContent,
+                Devise: tds[5].textContent,
+                Date: tds[6].textContent,
+                MontantHT: tds[7].textContent,
+                MontantTVA: tds[8].textContent,
+                DroitsTimbre: tds[9].textContent,
+                MontantTTC: tds[10].textContent
+            };
+        });
+
+        // Export to Excel
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Factures");
+        XLSX.writeFile(wb, "factures_exportees.xlsx");
+
+        // Send export request to backend and remove rows on success
+        for (const tr of selectedRows) {
+            const id = tr.id.replace('invoiceRow','');
+            try {
+                const res = await fetch(`/achat/export/${id}`, { method: 'POST' });
+                const result = await res.json();
+                if (result.success) {
+                    tr.remove();
+                } else {
+                    console.error(`Invoice ${id} export failed`);
+                }
+            } catch (err) {
+                console.error(`Invoice ${id} export error:`, err);
+            }
+        }
+
+        Swal.fire('Exporté !', 'Les factures sélectionnées ont été exportées.', 'success');
+    });
+
+});
+</script>
+
+
+{% endblock %}

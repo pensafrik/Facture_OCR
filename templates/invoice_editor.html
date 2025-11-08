@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Facture OCR Live{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+    <h3><i class="fa-solid fa-file-invoice"></i> Facture OCR Live</h3>
+    <label class="btn btn-upload mt-2">
+      <i class="fa-solid fa-upload"></i> Importer PDF/JPG/PNG
+      <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" hidden>
+    </label>
+</div>
+
+<div class="row g-4">
+  <!-- Form -->
+  <div class="col-md-6">
+    <div class="card p-4">
+        <h4 class="mb-3"><i class="fa-solid fa-file-lines"></i> Formulaire</h4>
+        <form id="invoiceForm">
+          <div class="mb-3">
+            <label class="form-label">Client</label>
+            <input type="text" class="form-control" id="client">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Nature de facture</label>
+            <select class="form-select" id="natureFacture">
+                <option value="">-- Sélectionner --</option>
+                <option value="achat">Achats</option>
+                <option value="vente">Ventes</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Compte de produit</label>
+            <input type="text" class="form-control" id="compteProduit">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Devise</label>
+            <input type="text" class="form-control" id="devise" list="deviseList" placeholder="Sélectionner une devise">
+            <datalist id="deviseList">
+                <option value="USD">
+                <option value="EUR">
+                <option value="MAD">
+                <option value="GBP">
+                <option value="JPY">
+                <option value="CNY">
+                <option value="CHF">
+                <option value="CAD">
+                <option value="AUD">
+                <option value="AED">
+            </datalist>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Numéro de facture</label>
+            <input type="text" class="form-control" id="numero">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Date de facturation (JJ/MM/AAAA)</label>
+            <input type="text" class="form-control" id="dateFacturation" placeholder="JJ/MM/AAAA" maxlength="10">
+          </div>
+
+          <div class="mb-3">
+  <label class="form-label">Délai de Paiement (jours)</label>
+  <input type="number" min="0" class="form-control" id="delaiPaiement" placeholder="Entrez le délai en jours">
+</div>
+
+
+          <div class="mb-3">
+            <label class="form-label">Montant H.T</label>
+            <input type="text" class="form-control" id="montantHT">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Montant TVA</label>
+            <input type="text" class="form-control" id="montantTVA">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Droits de timbre</label>
+            <input type="text" class="form-control" id="droitsTimbre">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Montant T.T.C</label>
+            <input type="text" class="form-control" id="montantTTC">
+          </div>
+
+          <div class="text-center mt-3">
+              <button type="button" class="btn btn-primary" id="saveInvoiceBtn">
+                  <i class="fa-solid fa-floppy-disk"></i> Enregistrer
+              </button>
+          </div>
+        </form>
+    </div>
+  </div>
+
+  <!-- Preview -->
+  <div class="col-md-6">
+    <div class="card p-4">
+        <h4 class="mb-3"><i class="fa-solid fa-eye"></i> Aperçu</h4>
+        <div class="preview-container" id="previewContainer">
+          <span class="text-muted">Aucun fichier choisi</span>
+        </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const fileInput = document.getElementById('fileInput');
+const previewContainer = document.getElementById('previewContainer');
+
+// File preview
+fileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    previewContainer.innerHTML = '';
+
+    if (file.type === 'application/pdf') {
+        const url = URL.createObjectURL(file);
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        iframe.style.objectFit = 'contain';
+        previewContainer.appendChild(iframe);
+    } else if (file.type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'contain';
+        previewContainer.appendChild(img);
+    }
+});
+
+// Format numbers: thousands separator + 2 decimals
+function formatNumber(value) {
+    let num = parseFloat(value);
+    if (isNaN(num)) num = 0;
+    return num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+// Mask Date input JJ/MM/AAAA
+const dateInput = document.getElementById('dateFacturation');
+dateInput.addEventListener('input', e => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 8) value = value.slice(0, 8);
+
+    let formatted = '';
+    if (value.length > 4) formatted = value.slice(0,2) + '/' + value.slice(2,4) + '/' + value.slice(4);
+    else if (value.length > 2) formatted = value.slice(0,2) + '/' + value.slice(2);
+    else formatted = value;
+
+    e.target.value = formatted;
+});
+
+// --- Save invoice ---
+document.getElementById('saveInvoiceBtn').addEventListener('click', async () => {
+    const natureFacture = document.getElementById('natureFacture').value;
+    if (!natureFacture) return alert("Veuillez sélectionner la nature de facture !");
+
+    // Convert date JJ/MM/AAAA -> YYYY-MM-DD
+    const dateStr = dateInput.value.trim();
+    let dateISO = null;
+    if (dateStr) {
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+            const day = parseInt(parts[0],10);
+            const month = parseInt(parts[1],10) - 1;
+            const year = parseInt(parts[2],10);
+            const d = new Date(year, month, day);
+            if (!isNaN(d)) dateISO = d.toISOString().split('T')[0];
+            else return alert('Date invalide !');
+        } else {
+            return alert('Format de date invalide, utilisez JJ/MM/AAAA');
+        }
+    }
+
+    const data = {
+    client: document.getElementById('client').value.trim(),
+    compteProduit: document.getElementById('compteProduit').value.trim(),
+    devise: document.getElementById('devise').value.trim(),
+    numero: document.getElementById('numero').value.trim(),
+    dateFacturation: dateISO,
+    delaiPaiement: parseInt(document.getElementById('delaiPaiement').value) || 0, // NEW
+    montantHT: parseFloat(document.getElementById('montantHT').value.replace(/,/g, '')) || 0,
+    montantTVA: parseFloat(document.getElementById('montantTVA').value.replace(/,/g, '')) || 0,
+    droitsTimbre: parseFloat(document.getElementById('droitsTimbre').value.replace(/,/g, '')) || 0,
+    montantTTC: parseFloat(document.getElementById('montantTTC').value.replace(/,/g, '')) || 0,
+    natureFacture: natureFacture
+};
+
+    // Fix numbers to 2 decimals
+    data.montantHT = parseFloat(data.montantHT.toFixed(2));
+    data.montantTVA = parseFloat(data.montantTVA.toFixed(2));
+    data.droitsTimbre = parseFloat(data.droitsTimbre.toFixed(2));
+    data.montantTTC = parseFloat(data.montantTTC.toFixed(2));
+
+    try {
+        const res = await fetch('/invoice/save', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        if(result.success){
+            alert('Facture enregistrée avec succès !');
+            document.getElementById('montantHT').value = formatNumber(data.montantHT);
+            document.getElementById('montantTVA').value = formatNumber(data.montantTVA);
+            document.getElementById('droitsTimbre').value = formatNumber(data.droitsTimbre);
+            document.getElementById('montantTTC').value = formatNumber(data.montantTTC);
+        } else {
+            alert('Erreur: ' + (result.error || 'Impossible d\'enregistrer'));
+        }
+    } catch(err){
+        alert('Erreur: ' + err.message);
+    }
+});
+</script>
+{% endblock %}

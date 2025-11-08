@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Mon Site{% endblock %}</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<style>
+body { font-family: 'Segoe UI', sans-serif; background:#f4f6f9; display:flex; margin:0; min-height:100vh; }
+.sidebar { width:220px; background:#063E8A; color:#fff; display:flex; flex-direction:column; padding-top:20px; position:sticky; top:0; height:100vh; }
+.sidebar .brand { font-size:1.4rem; font-weight:bold; padding-left:20px; margin-bottom:25px; }
+.sidebar a { color:#fff; text-decoration:none; padding:12px 25px; display:flex; align-items:center; gap:12px; border-radius:12px; margin:5px 10px; transition:0.3s; }
+.sidebar a:hover { background:linear-gradient(90deg,#0353a4,#0d5ecf); transform:translateX(3px); }
+.sidebar a.active { background:linear-gradient(90deg,#ffc107,#ffca2c); color:#063E8A; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.25); }
+
+.content { flex-grow:1; padding:25px; overflow:auto; }
+
+.preview-container { width:100%; height:800px; border-radius:10px; background:#fff; border:1px solid #ddd; display:flex; align-items:center; justify-content:center; overflow:auto; }
+.preview-container iframe,
+.preview-container img { width:100%; height:100%; border:none; object-fit:contain; }
+.btn-upload { display:inline-flex; align-items:center; gap:8px; background:#063E8A; color:#fff; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; }
+.btn-upload:hover { background:#0353a4; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="brand"><i class="fa-solid fa-file-invoice"></i> Facture OCR</div>
+
+  <a href="/" class="{% if request.path == '/' %}active{% endif %}">
+    <i class="fa-solid fa-house"></i> Accueil
+  </a>
+
+  <!-- Achats Section -->
+  <a id="achatsToggle" class="d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#achatsMenu">
+    <span><i class="fa-solid fa-cart-shopping"></i> Achats</span>
+    <i id="achatsChevron" class="fa-solid fa-chevron-down"></i>
+  </a>
+  <div class="collapse {% if request.path in ['/achat-invoice','/achat','/achat-exported'] %}show{% endif %}" id="achatsMenu">
+    <a href="/achat-invoice" class="ms-4 d-block py-2 {% if request.path == '/achat-invoice' %}active{% endif %}">
+      <i class="fa-solid fa-file-import"></i> Importer facture
+    </a>
+    <a href="/achat" class="ms-4 d-block py-2 {% if request.path == '/achat' %}active{% endif %}">
+      <i class="fa-solid fa-clock-rotate-left"></i> Facture validée
+    </a>
+    <a href="/achat-exported" class="ms-4 d-block py-2 {% if request.path == '/achat-exported' %}active{% endif %}">
+      <i class="fa-solid fa-file-export"></i> Facture exportée
+    </a>
+  </div>
+
+  <!-- Ventes Section -->
+  <a id="ventesToggle" class="d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#ventesMenu">
+    <span><i class="fa-solid fa-hand-holding-dollar"></i> Ventes</span>
+    <i id="ventesChevron" class="fa-solid fa-chevron-down"></i>
+  </a>
+  <div class="collapse {% if request.path in ['/vente-invoice','/vente','/vente-exported'] %}show{% endif %}" id="ventesMenu">
+    <a href="/vente-invoice" class="ms-4 d-block py-2 {% if request.path == '/vente-invoice' %}active{% endif %}">
+      <i class="fa-solid fa-file-import"></i> Importer facture
+    </a>
+    <a href="/vente" class="ms-4 d-block py-2 {% if request.path == '/vente' %}active{% endif %}">
+      <i class="fa-solid fa-clock-rotate-left"></i> Facture validée
+    </a>
+    <a href="/vente-exported" class="ms-4 d-block py-2 {% if request.path == '/vente-exported' %}active{% endif %}">
+      <i class="fa-solid fa-file-export"></i> Facture exportée
+    </a>
+  </div>
+
+  <a href="/etat-tier" class="{% if request.path == '/etat-tier' %}active{% endif %}">
+    <i class="fa-solid fa-chart-line"></i> Etat de tier
+  </a>
+</div>
+
+
+<div class="content">
+  {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}
+<script>
+const achatsMenuEl = document.getElementById('achatsMenu');
+const achatsChevron = document.getElementById('achatsChevron');
+const achatsCollapse = new bootstrap.Collapse(achatsMenuEl, {toggle:false});
+document.getElementById('achatsToggle').addEventListener('click', e => { e.preventDefault(); achatsCollapse.toggle(); });
+achatsMenuEl.addEventListener('show.bs.collapse', () => { achatsChevron.style.transform = 'rotate(180deg)'; });
+achatsMenuEl.addEventListener('hide.bs.collapse', () => { achatsChevron.style.transform = 'rotate(0deg)'; });
+if(achatsMenuEl.classList.contains('show')) achatsChevron.style.transform = 'rotate(180deg)';
+
+const ventesMenuEl = document.getElementById('ventesMenu');
+const ventesChevron = document.getElementById('ventesChevron');
+const ventesCollapse = new bootstrap.Collapse(ventesMenuEl, {toggle:false});
+document.getElementById('ventesToggle').addEventListener('click', e => { e.preventDefault(); ventesCollapse.toggle(); });
+ventesMenuEl.addEventListener('show.bs.collapse', () => { ventesChevron.style.transform = 'rotate(180deg)'; });
+ventesMenuEl.addEventListener('hide.bs.collapse', () => { ventesChevron.style.transform = 'rotate(0deg)'; });
+if(ventesMenuEl.classList.contains('show')) ventesChevron.style.transform = 'rotate(180deg)';
+</script>
+
+{% endblock %}
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Invoice PDF</title>
+<style>
+body { font-family: sans-serif; margin: 20px; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+table, th, td { border: 1px solid black; }
+th, td { padding: 8px; text-align: left; }
+h1 { text-align: center; }
+</style>
+</head>
+<body>
+<h1>FACTURE</h1>
+
+<p><strong>Client:</strong> {{ data.client }}</p>
+<p><strong>Numéro Facture:</strong> {{ data.invoiceNumber }}</p>
+<p><strong>Date Facture:</strong> {{ data.invoiceDate }}</p>
+
+<table>
+  <tr>
+    <th>Désignation</th>
+    <th>Qté</th>
+    <th>Prix Uni. HT</th>
+    <th>Total HT</th>
+  </tr>
+  <tr>
+    <td>{{ data.item }}</td>
+    <td>{{ "%.2f"|format(data.quantity) }}</td>
+    <td>{{ "%.2f"|format(data.unitPrice) }}</td>
+    <td>{{ "%.2f"|format(data.quantity * data.unitPrice) }}</td>
+  </tr>
+</table>
+
+<p><strong>Montant Total:</strong> {{ "%.2f"|format(data.quantity * data.unitPrice) }} MAD</p>
+</body>
+</html>

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Factures Exportées{% endblock %}
+
+{% block content %}
+<div class="content flex-grow-1">
+    <h2><i class="fa-solid fa-file-export"></i> Factures Exportées</h2>
+    <div class="card mt-3">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Numéro</th>
+                        <th>Client</th>
+                        <th>Compte produit</th>
+                        <th>Devise</th>
+                        <th>Date</th>
+                        <th>Montant H.T</th>
+                        <th>Montant TVA</th>
+                        <th>Droits timbre</th>
+                        <th>Montant T.T.C</th>
+                        <th>Actions</th> <!-- Added -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr id="invoiceRow{{ invoice.id }}">
+                        <td>{{ loop.index }}</td>
+                        <td>{{ invoice.numero }}</td>
+                        <td>{{ invoice.client }}</td>
+                        <td>{{ invoice.compteProduit }}</td>
+                        <td>{{ invoice.devise }}</td>
+                        <td>{{ invoice.dateFacturation }}</td>
+                        <td>{{ "{:,.2f}".format(invoice.montantHT) }}</td>
+                        <td>{{ "{:,.2f}".format(invoice.montantTVA) }}</td>
+                        <td>{{ "{:,.2f}".format(invoice.droitsTimbre) }}</td>
+                        <td>{{ "{:,.2f}".format(invoice.montantTTC) }}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm delete-btn" data-id="{{ invoice.id }}">
+                                <i class="fa-solid fa-trash"></i> Supprimer
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="11" class="text-center">Aucune facture exportée.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Delete Invoice
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            Swal.fire({
+                title: 'Supprimer cette facture exportée?',
+                text: "Cette action est irréversible!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, supprimer'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/achat/delete/${btn.dataset.id}`, { method: 'DELETE' })
+                        .then(res => res.json())
+                        .then(() => {
+                            document.getElementById(`invoiceRow${btn.dataset.id}`).remove();
+                            Swal.fire('Supprimé!', 'La facture exportée a été supprimée.', 'success');
+                        });
+                }
+            });
+        });
+    });
+
+});
+</script>
+{% endblock %}

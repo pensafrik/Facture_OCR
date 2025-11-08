@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Ventes{% endblock %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<style>
+body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+.sidebar { min-height: 100vh; background-color: #063E8A; color: #fff; padding-top: 20px; }
+.sidebar a { color: #fff; display: block; padding: 14px 22px; text-decoration: none; border-radius: 10px; margin-bottom: 5px; font-weight: 500; transition: all 0.3s ease; }
+.sidebar a:hover, .sidebar a.active { background: linear-gradient(90deg, #0353a4, #0d5ecf); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.content { margin-left: 240px; padding: 30px 40px; }
+.card { border-radius: 20px; box-shadow: 0 12px 28px rgba(0,0,0,0.12); background-color: #fff; padding: 25px; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.card:hover { transform: translateY(-5px); box-shadow: 0 16px 36px rgba(0,0,0,0.16); }
+table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; }
+table thead { background-color: #063E8A; color: #fff; font-weight: 600; font-size: 14px; text-transform: uppercase; }
+.table-hover tbody tr { transition: background 0.3s ease, transform 0.2s ease; }
+.table-hover tbody tr:hover { background-color: rgba(6,62,138,0.05); transform: translateY(-2px); }
+td, th { vertical-align: middle !important; text-align: center; }
+.action-buttons { display: flex; justify-content: center; gap: 6px; }
+.action-buttons .btn { padding: 6px 10px; font-size: 13px; border-radius: 8px; }
+.btn { border-radius: 12px; font-weight: 500; transition: all 0.3s ease; }
+.btn-primary { background: linear-gradient(90deg, #063E8A, #0d5ecf); border: none; color: #fff; }
+.btn-primary:hover { background: linear-gradient(90deg, #0d5ecf, #063E8A); transform: translateY(-2px); }
+.btn-warning { background: linear-gradient(90deg, #ffc107, #ffca2c); color: #212529; }
+.btn-warning:hover { transform: translateY(-2px); }
+.btn-danger { background: linear-gradient(90deg, #dc3545, #e55360); border: none; color: #fff; }
+.btn-danger:hover { transform: translateY(-2px); }
+.modal-header { background: linear-gradient(90deg, #063E8A, #0d5ecf); color: #fff; border-bottom: none; border-top-left-radius: 20px; border-top-right-radius: 20px; }
+.modal-footer { border-top: none; display: flex; justify-content: space-between; }
+input, select { border-radius: 10px; padding: 10px 12px; border: 1px solid #dcdcdc; transition: 0.3s ease; }
+input:focus, select:focus { border-color: #063E8A; box-shadow: 0 0 8px rgba(6,62,138,0.2); outline: none; }
+h2 i { color: #063E8A; margin-right: 8px; }
+@media (max-width: 768px) { .content { margin-left: 0; padding: 20px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex">
+<div class="content flex-grow-1">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <h2><i class="fa-solid fa-file-invoice"></i> Factures de Ventes</h2>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addInvoiceModal">
+                <i class="fa-solid fa-plus"></i> Ajouter Facture
+            </button>
+            <button class="btn btn-success mt-2" id="exportBtn">
+                <i class="fa-solid fa-file-export"></i> Exporter
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="invoicesTable">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="selectAll"></th>
+                    <th>#</th>
+                    <th>Numéro de Facture</th>
+                    <th>Client</th>
+                    <th>Compte Produit</th>
+                    <th>Devise</th>
+                    <th>Date de Facturation</th>
+                    <th>Montant H.T</th>
+                    <th>Montant TVA</th>
+                    <th>Droits de Timbre</th>
+                    <th>Montant T.T.C</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in invoices %}
+                <tr id="invoiceRow{{ invoice.id }}">
+                    <td><input type="checkbox" class="select-row"></td>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ invoice.numero }}</td>
+                    <td>{{ invoice.client }}</td>
+                    <td>{{ invoice.compteProduit }}</td>
+                    <td>{{ invoice.devise }}</td>
+                    <td>{{ invoice.dateFacturation }}</td>
+                    <td>{{ "{:,.2f}".format(invoice.montantHT) }}</td>
+                    <td>{{ "{:,.2f}".format(invoice.montantTVA) }}</td>
+                    <td>{{ "{:,.2f}".format(invoice.droitsTimbre) }}</td>
+                    <td>{{ "{:,.2f}".format(invoice.montantTTC) }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-warning edit-btn"
+                                data-id="{{ invoice.id }}"
+                                data-numero="{{ invoice.numero }}"
+                                data-client="{{ invoice.client }}"
+                                data-compte="{{ invoice.compteProduit }}"
+                                data-devise="{{ invoice.devise }}"
+                                data-date="{{ invoice.dateFacturation }}"
+                                data-montantht="{{ invoice.montantHT }}"
+                                data-montanttva="{{ invoice.montantTVA }}"
+                                data-droitstimbre="{{ invoice.droitsTimbre }}"
+                                data-montantttc="{{ invoice.montantTTC }}"
+                                data-bs-toggle="modal" data-bs-target="#editInvoiceModal">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-btn" data-id="{{ invoice.id }}">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="12" class="text-center">Aucune facture trouvée.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<!-- Add Invoice Modal -->
+<div class="modal fade" id="addInvoiceModal" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog">
+    <div class="modal-content">
+    <form id="addInvoiceForm">
+        <div class="modal-header">
+            <h5 class="modal-title">Ajouter Facture</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3"><label class="form-label">Client</label><input type="text" class="form-control" name="client" required></div>
+            <div class="mb-3"><label class="form-label">Compte Produit</label><input type="text" class="form-control" name="compteProduit" required></div>
+            <div class="mb-3"><label class="form-label">Devise</label><input type="text" class="form-control" name="devise" required></div>
+            <div class="mb-3"><label class="form-label">Numéro de Facture</label><input type="text" class="form-control" name="numero" required></div>
+            <div class="mb-3"><label class="form-label">Date de Facturation</label><input type="text" class="form-control" name="dateFacturation" required></div>
+            <div class="mb-3"><label class="form-label">Montant H.T</label><input type="number" step="0.01" class="form-control" name="montantHT" required></div>
+            <div class="mb-3"><label class="form-label">Montant TVA</label><input type="number" step="0.01" class="form-control" name="montantTVA" required></div>
+            <div class="mb-3"><label class="form-label">Droits de Timbre</label><input type="number" step="0.01" class="form-control" name="droitsTimbre" required></div>
+            <div class="mb-3"><label class="form-label">Montant T.T.C</label><input type="number" step="0.01" class="form-control" name="montantTTC" required></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="submit" class="btn btn-primary">Ajouter</button>
+        </div>
+    </form>
+    </div>
+</div>
+</div>
+
+<!-- Edit Invoice Modal -->
+<div class="modal fade" id="editInvoiceModal" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog">
+    <div class="modal-content">
+    <form id="editInvoiceForm">
+        <div class="modal-header">
+            <h5 class="modal-title">Modifier Facture</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" name="id">
+            <div class="mb-3"><label class="form-label">Client</label><input type="text" class="form-control" name="client" required></div>
+            <div class="mb-3"><label class="form-label">Compte Produit</label><input type="text" class="form-control" name="compteProduit" required></div>
+            <div class="mb-3"><label class="form-label">Devise</label><input type="text" class="form-control" name="devise" required></div>
+            <div class="mb-3"><label class="form-label">Numéro de Facture</label><input type="text" class="form-control" name="numero" required></div>
+            <div class="mb-3"><label class="form-label">Date de Facturation</label><input type="text" class="form-control" name="dateFacturation" required></div>
+            <div class="mb-3"><label class="form-label">Montant H.T</label><input type="number" step="0.01" class="form-control" name="montantHT" required></div>
+            <div class="mb-3"><label class="form-label">Montant TVA</label><input type="number" step="0.01" class="form-control" name="montantTVA" required></div>
+            <div class="mb-3"><label class="form-label">Droits de Timbre</label><input type="number" step="0.01" class="form-control" name="droitsTimbre" required></div>
+            <div class="mb-3"><label class="form-label">Montant T.T.C</label><input type="number" step="0.01" class="form-control" name="montantTTC" required></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="submit" class="btn btn-warning">Modifier</button>
+        </div>
+    </form>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const addForm = document.getElementById('addVenteForm');
+    const editForm = document.getElementById('editVenteForm');
+
+    // Fill Edit Modal
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modal = editForm;
+            modal.id.value = btn.dataset.id;
+            modal.numero.value = btn.dataset.numero;
+            modal.client.value = btn.dataset.client;
+            modal.compteProduit.value = btn.dataset.compte;
+            modal.devise.value = btn.dataset.devise;
+            modal.dateFacturation.value = btn.dataset.date;
+            modal.montantHT.value = parseFloat(btn.dataset.montantht).toFixed(2);
+            modal.montantTVA.value = parseFloat(btn.dataset.montanttva).toFixed(2);
+            modal.droitsTimbre.value = parseFloat(btn.dataset.droitstimbre).toFixed(2);
+            modal.montantTTC.value = parseFloat(btn.dataset.montantttc).toFixed(2);
+        });
+    });
+
+    // Delete Invoice
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            Swal.fire({
+                title: 'Supprimer cette facture?',
+                text: "Cette action est irréversible!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Oui, supprimer'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/vente/delete/${btn.dataset.id}`, { method: 'DELETE' })
+                        .then(res => res.json())
+                        .then(() => {
+                            document.getElementById(`invoiceRow${btn.dataset.id}`).remove();
+                            Swal.fire('Supprimé!', 'La facture a été supprimée.', 'success');
+                        });
+                }
+            });
+        });
+    });
+
+    // Add & Edit form submission
+    addForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(addForm).entries());
+        fetch('/vente/add', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(data) 
+        }).then(res => res.json()).then(() => location.reload());
+    });
+
+    editForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(editForm).entries());
+        fetch(`/vente/edit/${data.id}`, { 
+            method: 'PUT', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(data) 
+        }).then(res => res.json()).then(() => location.reload());
+    });
+
+    // Select all checkboxes
+    const selectAll = document.getElementById('selectAll');
+    selectAll.addEventListener('change', () => {
+        document.querySelectorAll('.select-row').forEach(cb => cb.checked = selectAll.checked);
+    });
+
+    // Export selected invoices
+    document.getElementById('exportBtn').addEventListener('click', async () => {
+        const selectedRows = [...document.querySelectorAll('.select-row')]
+            .filter(cb => cb.checked)
+            .map(cb => cb.closest('tr'));
+
+        if (selectedRows.length === 0) {
+            Swal.fire('Aucune sélection', 'Veuillez sélectionner au moins une facture.', 'warning');
+            return;
+        }
+
+        // Build Excel data
+        const data = selectedRows.map(tr => {
+            const tds = tr.querySelectorAll('td');
+            return {
+                Numero: tds[2].textContent,
+                Client: tds[3].textContent,
+                CompteProduit: tds[4].textContent,
+                Devise: tds[5].textContent,
+                Date: tds[6].textContent,
+                MontantHT: tds[7].textContent,
+                MontantTVA: tds[8].textContent,
+                DroitsTimbre: tds[9].textContent,
+                MontantTTC: tds[10].textContent
+            };
+        });
+
+        // Export Excel
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Factures");
+        XLSX.writeFile(wb, "ventes_exportees.xlsx");
+
+        // Mark as exported in backend & remove rows
+        for (const tr of selectedRows) {
+            const id = tr.id.replace('invoiceRow','');
+            try {
+                const res = await fetch(`/vente/export/${id}`, { method: 'POST' });
+                const result = await res.json();
+                if (result.success) tr.remove();
+            } catch (err) {
+                console.error(`Invoice ${id} export error:`, err);
+            }
+        }
+
+        Swal.fire('Exporté !', 'Les factures sélectionnées ont été exportées.', 'success');
+    });
+
+});
+</script>
+{% endblock %}
+

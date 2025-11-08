@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+
+{% block title %}Etat de Tier{% endblock %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<style>
+  body {
+    background-color: #f4f6f9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .sidebar {
+    min-height: 100vh;
+    background-color: #063E8A;
+    color: #fff;
+    padding-top: 20px;
+  }
+
+  .sidebar a {
+    color: #fff;
+    display: block;
+    padding: 14px 22px;
+    text-decoration: none;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .sidebar a:hover, .sidebar a.active {
+    background: linear-gradient(90deg, #0353a4, #0d5ecf);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  .content {
+    margin-left: 240px;
+    padding: 30px 40px;
+  }
+
+  .card {
+    border-radius: 20px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    background-color: #fff;
+    padding: 25px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 36px rgba(0,0,0,0.16);
+  }
+
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  table thead {
+    background-color: #063E8A;
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+  }
+
+  .table-hover tbody tr {
+    transition: background 0.3s ease, transform 0.2s ease;
+  }
+
+  .table-hover tbody tr:hover {
+    background-color: rgba(6,62,138,0.05);
+    transform: translateY(-2px);
+  }
+
+  td, th { vertical-align: middle !important; }
+
+  .btn {
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary {
+    background: linear-gradient(90deg, #063E8A, #0d5ecf);
+    border: none; color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(90deg, #0d5ecf, #063E8A);
+    transform: translateY(-2px);
+  }
+
+  .btn-warning {
+    background: linear-gradient(90deg, #ffc107, #ffca2c);
+    color: #212529;
+  }
+
+  .btn-warning:hover { transform: translateY(-2px); }
+
+  .btn-danger {
+    background: linear-gradient(90deg, #dc3545, #e55360);
+    border: none; color: #fff;
+  }
+
+  .btn-danger:hover { transform: translateY(-2px); }
+
+  .modal-header {
+    background: linear-gradient(90deg, #063E8A, #0d5ecf);
+    color: #fff;
+    border-bottom: none;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+  }
+
+  .modal-footer { border-top: none; display: flex; justify-content: space-between; }
+
+  input, select {
+    border-radius: 10px;
+    padding: 10px 12px;
+    border: 1px solid #dcdcdc;
+    transition: 0.3s ease;
+  }
+
+  input:focus, select:focus {
+    border-color: #063E8A;
+    box-shadow: 0 0 8px rgba(6,62,138,0.2);
+    outline: none;
+  }
+
+  h2 i { color: #063E8A; margin-right: 8px; }
+
+  @media (max-width: 768px) {
+    .content { margin-left: 0; padding: 20px; }
+  }
+  /* Modal buttons */
+.modal-footer .btn-primary {
+  background: linear-gradient(90deg, #063E8A, #0d5ecf);
+  border: none;
+  color: #fff;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.modal-footer .btn-primary:hover {
+  background: linear-gradient(90deg, #0d5ecf, #063E8A);
+  transform: translateY(-2px);
+}
+
+.modal-footer .btn-warning {
+  background: linear-gradient(90deg, #ffc107, #ffca2c);
+  color: #212529;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.modal-footer .btn-warning:hover {
+  background: linear-gradient(90deg, #ffca2c, #ffc107);
+  transform: translateY(-2px);
+}
+
+.modal-footer .btn-secondary {
+  background: linear-gradient(90deg, #6c757d, #5a6268);
+  color: #fff;
+  border: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.modal-footer .btn-secondary:hover {
+  background: linear-gradient(90deg, #5a6268, #6c757d);
+  transform: translateY(-2px);
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex">
+  <div class="content flex-grow-1">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+      <h2><i class="fa-solid fa-chart-line"></i> Etat de Tier</h2>
+      <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addTierModal">
+        <i class="fa-solid fa-plus"></i> Ajouter Tier
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" id="tiersTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Raison Sociale</th>
+              <th>Nature Tier</th>
+              <th>ICE</th>
+              <th>IF</th>
+              <th>Délai de Paiement</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tier in tiers %}
+            <tr id="tierRow{{ tier.id }}">
+              <td>{{ loop.index }}</td>
+              <td>{{ tier.raison_sociale }}</td>
+              <td>{{ tier.nature_tier }}</td>
+              <td>{{ tier.ice }}</td>
+              <td>{{ tier.if_field }}</td>
+             <td>{{ tier.delai_paiement if tier.delai_paiement is not none else '' }} jours</td>
+              <td>  
+                <button class="btn btn-sm btn-warning edit-btn" 
+                        data-id="{{ tier.id }}" 
+                        data-raison="{{ tier.raison_sociale }}" 
+                        data-nature="{{ tier.nature_tier }}"
+                        data-ice="{{ tier.ice }}"
+                        data-if="{{ tier.if_field }}"
+                        data-delai="{{ tier.delai_paiement if tier.delai_paiement is not none else '' }}"
+
+                        data-bs-toggle="modal" data-bs-target="#editTierModal">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button class="btn btn-sm btn-danger delete-btn" data-id="{{ tier.id }}">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center">Aucun tier trouvé.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add Tier Modal -->
+<div class="modal fade" id="addTierModal" tabindex="-1" aria-labelledby="addTierModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="addTierForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addTierModalLabel">Ajouter Tier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Raison Sociale</label>
+            <input type="text" class="form-control" name="raison_sociale" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nature Tier</label>
+            <select class="form-select" name="nature_tier" required>
+              <option value="" selected disabled>Choisir une option</option>
+              <option value="Client">Client</option>
+              <option value="Fournisseur">Fournisseur</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">ICE</label>
+            <input type="text" class="form-control" name="ice" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">IF</label>
+            <input type="text" class="form-control" name="if_field" required>
+          </div>
+          <div class="mb-3">
+  <label class="form-label">Délai de Paiement (jours)</label>
+  <input type="number" min="0" class="form-control" name="delai_paiement" placeholder="Entrez le délai en jours">
+</div>
+         </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Ajouter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Tier Modal -->
+<div class="modal fade" id="editTierModal" tabindex="-1" aria-labelledby="editTierModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editTierForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editTierModalLabel">Modifier Tier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="tier_id" id="editTierId">
+          <div class="mb-3">
+            <label class="form-label">Raison Sociale</label>
+            <input type="text" class="form-control" name="raison_sociale" id="editRaisonSociale" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nature Tier</label>
+            <select class="form-select" name="nature_tier" id="editNatureTier" required>
+              <option value="Client">Client</option>
+              <option value="Fournisseur">Fournisseur</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">ICE</label>
+            <input type="text" class="form-control" name="ice" id="editICE" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">IF</label>
+            <input type="text" class="form-control" name="if_field" id="editIF" required>
+          </div>
+          <div class="mb-3">
+  <label class="form-label">Délai de Paiement (jours)</label>
+  <input type="number" min="0" class="form-control" name="delai_paiement" id="editDelaiPaiement" placeholder="Entrez le délai en jours">
+</div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-warning">Modifier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  // ADD TIER
+  document.getElementById('addTierForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    if(data.delai_paiement) data.delai_paiement = parseInt(data.delai_paiement);
+    const res = await fetch('{{ url_for("add_tier") }}', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if(result.success){
+      Swal.fire('Ajouté!', 'Tier ajouté avec succès.', 'success').then(() => location.reload());
+    } else {
+      Swal.fire('Erreur!', result.error || 'Impossible d\'ajouter le tier.', 'error');
+    }
+  });
+
+  // EDIT TIER
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('editTierId').value = btn.dataset.id;
+      document.getElementById('editRaisonSociale').value = btn.dataset.raison;
+      document.getElementById('editNatureTier').value = btn.dataset.nature;
+      document.getElementById('editICE').value = btn.dataset.ice;
+      document.getElementById('editIF').value = btn.dataset.if;
+      document.getElementById('editDelaiPaiement').value = btn.dataset.delai;
+    });
+  });
+
+  document.getElementById('editTierForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const tierId = document.getElementById('editTierId').value;
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+    if(data.delai_paiement) data.delai_paiement = parseInt(data.delai_paiement);
+    const confirm = await Swal.fire({
+      title: 'Êtes-vous sûr ?',
+      text: "Voulez-vous vraiment modifier ce tier ?",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Oui, modifier',
+      cancelButtonText: 'Annuler',
+      reverseButtons: true
+    });
+    if(confirm.isConfirmed){
+      const res = await fetch(`/etat-tier/edit/${tierId}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+      const result = await res.json();
+      if(result.success) Swal.fire('Modifié!', 'Tier modifié avec succès.', 'success').then(()=>location.reload());
+      else Swal.fire('Erreur!', result.error || 'Impossible de modifier le tier.', 'error');
+    }
+  });
+
+  // DELETE TIER
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tierId = btn.dataset.id;
+      Swal.fire({
+        title: 'Supprimer ce tier?',
+        text: "Cette action est irréversible!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Oui, supprimer!',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        reverseButtons: true   // <-- Annuler left, Oui right
+      }).then(async (result) => {
+        if(result.isConfirmed){
+          const res = await fetch(`/etat-tier/delete/${tierId}`, { method:'POST' });
+          const r = await res.json();
+          if(r.success) Swal.fire('Supprimé!', 'Tier supprimé avec succès.', 'success').then(()=>location.reload());
+          else Swal.fire('Erreur!', r.error || 'Impossible de supprimer le tier.', 'error');
+        }
+      });
+    });
+  });
+
+});
+</script>
+{% endblock %}

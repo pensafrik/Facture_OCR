@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Ventes OCR Live{% endblock %}
+
+{% block content %}
+<div class="ocr-upload-container" data-endpoint="/vente-invoice/save">
+    <div class="text-center mb-4">
+        <h3><i class="fa-solid fa-file-invoice-dollar"></i> Ventes OCR Live</h3>
+        <label class="btn btn-upload mt-2">
+            <i class="fa-solid fa-upload"></i> Importer Facture (PDF/JPG/PNG)
+            <input type="file" class="file-input" accept=".pdf,.jpg,.jpeg,.png" hidden>
+        </label>
+    </div>
+
+    <div class="row g-4">
+        <!-- Form -->
+        <div class="col-md-6">
+            <div class="card p-4">
+                <h4 class="mb-3"><i class="fa-solid fa-file-lines"></i> Formulaire Auto-rempli</h4>
+                <form id="venteForm">
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fa-solid fa-hashtag"></i> Numéro de Facture</label>
+                        <input type="text" class="form-control form-field" data-key="numero">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fa-solid fa-user"></i> Client</label>
+                        <input type="text" class="form-control form-field" data-key="client">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fa-solid fa-box"></i> Désignation</label>
+                        <input type="text" class="form-control form-field" data-key="designation">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fa-solid fa-tags"></i> Nature de Vente</label>
+                        <input type="text" class="form-control form-field" data-key="typeVente">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fa-solid fa-money-bill"></i> Montant H.T</label>
+                        <input type="text" class="form-control form-field" data-key="ht">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fa-solid fa-percent"></i> Montant TVA</label>
+                        <input type="text" class="form-control form-field" data-key="tva">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fa-solid fa-money-bill-wave"></i> Montant T.T.C</label>
+                        <input type="text" class="form-control form-field" data-key="ttc">
+                    </div>
+                </form>
+                <div class="text-center mt-3">
+                    <button class="btn btn-primary save-btn"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="col-md-6">
+            <div class="card p-4">
+                <h4 class="mb-3"><i class="fa-solid fa-eye"></i> Aperçu</h4>
+                <div class="preview-container" id="previewContainer">
+                    <span class="text-muted">Aucun fichier choisi</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const fileInput = document.querySelector('.ocr-upload-container .file-input');
+const previewContainer = document.getElementById('previewContainer');
+const formFields = document.querySelectorAll('.ocr-upload-container .form-field');
+
+fileInput.addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    previewContainer.innerHTML = '';
+
+    // --- PDF or Image Preview like invoice_editor ---
+    if (file.type === 'application/pdf') {
+        const url = URL.createObjectURL(file);
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        iframe.style.objectFit = 'contain';
+        previewContainer.appendChild(iframe);
+    } else if (file.type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'contain';
+        previewContainer.appendChild(img);
+    }
+
+    // --- Optional: run OCR here if needed ---
+});
+</script>
+{% endblock %}
